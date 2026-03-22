@@ -864,28 +864,39 @@
 
     .stat-value {
       font-family: 'Plus Jakarta Sans', sans-serif;
-      font-size: clamp(20px, 6vw, 32px);
+      font-size: 28px;
       font-weight: 800;
       letter-spacing: -0.03em;
       color: var(--text);
       line-height: 1.1;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      cursor: help;
+      word-break: break-all;
     }
 
-    .stat-value:hover {
-      overflow: visible;
-      white-space: normal;
-      background: var(--surface2);
+    .stat-card {
+      position: relative;
+      padding-bottom: 40px !important;
+    }
+
+    .btn-view-stat {
       position: absolute;
-      z-index: 100;
+      bottom: 12px;
+      right: 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text3);
       padding: 4px 8px;
       border-radius: 4px;
-      box-shadow: var(--shadow-lg);
-      border: 1px solid var(--border-hover);
-      max-width: 200%;
+      font-size: 10px;
+      text-transform: uppercase;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-view-stat:hover {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
     }
 
     .stat-label {
@@ -2166,10 +2177,6 @@
             <div class="page-subtitle">Manage your product catalog</div>
           </div>
           <div class="header-actions">
-            <button class="btn-refresh" id="btn-refresh-products" onclick="refreshProducts()"
-              title="Refresh products from server">
-              <span class="refresh-icon">🔄</span> Refresh
-            </button>
             <button class="btn btn-primary" onclick="openModal('modal-add-product')">+ Add Product</button>
           </div>
         </div>
@@ -2216,7 +2223,22 @@
             <div class="page-title">Sales History</div>
             <div class="page-subtitle">All transactions & revenue</div>
           </div>
-          <div class="date-pill">Filter by date coming soon</div>
+          <div class="header-actions">
+            <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-end; width:100%">
+              <div style="display:flex; align-items:center; gap:8px">
+                <span style="color:var(--text3); font-size:12px">From:</span>
+                <input type="date" id="sales-start-date" class="date-input"
+                  style="padding:6px; border-radius:6px; border:1px solid var(--border); background:var(--surface2); color:var(--text); font-size:12px; width:130px">
+              </div>
+              <div style="display:flex; align-items:center; gap:8px">
+                <span style="color:var(--text3); font-size:12px">To:</span>
+                <input type="date" id="sales-end-date" class="date-input"
+                  style="padding:6px; border-radius:6px; border:1px solid var(--border); background:var(--surface2); color:var(--text); font-size:12px; width:130px">
+              </div>
+              <button class="btn btn-primary" onclick="loadSalesHistory()"
+                style="padding:6px 12px; font-size:12px; align-self:flex-end">Filter</button>
+            </div>
+          </div>
         </div>
         <div class="page-body">
           <div class="stat-grid" id="sales-stats" style="grid-template-columns:repeat(3,1fr)"></div>
@@ -2280,12 +2302,7 @@
             <div class="page-title">Refund History</div>
             <div class="page-subtitle">Tracking all refunded transactions</div>
           </div>
-          <div class="header-actions">
-            <button class="btn-refresh" id="btn-refresh-refunds" onclick="refreshRefunds()"
-              title="Refresh refunds from server">
-              <span class="refresh-icon">🔄</span> Refresh
-            </button>
-          </div>
+          <div class="header-actions"></div>
         </div>
         <div class="page-body">
           <div class="table-card">
@@ -2688,6 +2705,18 @@
     </div>
   </div>
 
+  <!-- Stat Detail Modal -->
+  <div class="modal-overlay" id="modal-stat-detail">
+    <div class="modal">
+      <h3 id="stat-detail-title">Stat Detail</h3>
+      <div id="stat-detail-value"
+        style="font-size:32px; font-weight:800; margin-top:16px; word-break:break-all; color:var(--accent)">-</div>
+      <div style="display:flex; gap:12px; margin-top:24px">
+        <button class="btn btn-secondary" onclick="closeModal('modal-stat-detail')">Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- =========== WEBHOOK CONFIG =========== -->
   <!-- 
   🔗 WEBHOOK ENDPOINTS (Replace with your n8n URLs)
@@ -2770,6 +2799,11 @@
 
     function openModal(id) { document.getElementById(id).classList.add('active'); }
     function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+    function showStatDetail(title, value) {
+      document.getElementById('stat-detail-title').textContent = title;
+      document.getElementById('stat-detail-value').textContent = value;
+      openModal('modal-stat-detail');
+    }
 
     function fmt(n) { return 'Rs ' + parseFloat(n || 0).toFixed(2); }
     function fmtDate(d) { return d ? new Date(d).toLocaleString() : '—'; }
@@ -3736,15 +3770,33 @@
     // SALES HISTORY
     // ==========================================
     async function loadSalesHistory() {
-      const res = await apiCall(WEBHOOKS.GET_SALES, {});
+      const startDate = document.getElementById('sales-start-date')?.value;
+      const endDate = document.getElementById('sales-end-date')?.value;
+
+      const res = await apiCall(WEBHOOKS.GET_SALES, {
+        start_date: startDate ? startDate + ' 00:00:00' : null,
+        end_date: endDate ? endDate + ' 23:59:59' : null
+      });
       salesData = res.data || [];
       const tbody = document.getElementById('sales-tbody');
       const total = salesData.reduce((a, s) => a + parseFloat(s.total_amount), 0);
       const statsContainer = document.getElementById('sales-stats');
       statsContainer.innerHTML = `
-    <div class="stat-card"><div class="stat-value" title="${fmt(total)}">${fmt(total)}</div><div class="stat-label">Total Revenue</div></div>
-    <div class="stat-card"><div class="stat-value" title="${salesData.length}">${salesData.length}</div><div class="stat-label">Total Transactions</div></div>
-    <div class="stat-card"><div class="stat-value" title="${fmt(total / Math.max(1, salesData.length))}">${fmt(total / Math.max(1, salesData.length))}</div><div class="stat-label">Avg Sale Value</div></div>
+    <div class="stat-card">
+      <div class="stat-value">${fmt(total)}</div>
+      <div class="stat-label">Total Revenue</div>
+      <button class="btn-view-stat" onclick="showStatDetail('Total Revenue', '${fmt(total)}')">View</button>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">${salesData.length}</div>
+      <div class="stat-label">Total Transactions</div>
+      <button class="btn-view-stat" onclick="showStatDetail('Total Transactions', '${salesData.length}')">View</button>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">${fmt(total / Math.max(1, salesData.length))}</div>
+      <div class="stat-label">Avg Sale Value</div>
+      <button class="btn-view-stat" onclick="showStatDetail('Avg Sale Value', '${fmt(total / Math.max(1, salesData.length))}')">View</button>
+    </div>
   `;
       tbody.innerHTML = salesData.map(s => `<tr>
     <td class="td-primary">#${s.sale_id}</td>
@@ -3857,24 +3909,28 @@
       // Stat cards
       document.getElementById('dash-stats').innerHTML = `
     <div class="stat-card" style="--card-color:var(--success)">
-      <div class="stat-value" title="${fmt(d.total_revenue_today || 0)}">${fmt(d.total_revenue_today || 0)}</div>
+      <div class="stat-value">${fmt(d.total_revenue_today || 0)}</div>
       <div class="stat-label">Today's Revenue</div>
       <div class="stat-change up">↑ Live tracking</div>
+      <button class="btn-view-stat" onclick="showStatDetail('Today Revenue', '${fmt(d.total_revenue_today || 0)}')">View</button>
     </div>
     <div class="stat-card" style="--card-color:var(--accent)">
-      <div class="stat-value" title="${fmt(d.total_revenue_month || 0)}">${fmt(d.total_revenue_month || 0)}</div>
+      <div class="stat-value">${fmt(d.total_revenue_month || 0)}</div>
       <div class="stat-label">Monthly Revenue</div>
       <div class="stat-change up">↑ This month</div>
+      <button class="btn-view-stat" onclick="showStatDetail('Monthly Revenue', '${fmt(d.total_revenue_month || 0)}')">View</button>
     </div>
     <div class="stat-card" style="--card-color:var(--accent2)">
-      <div class="stat-value" title="${d.total_sales_today || 0}">${d.total_sales_today || 0}</div>
+      <div class="stat-value">${d.total_sales_today || 0}</div>
       <div class="stat-label">Today's Sales</div>
       <div class="stat-change up">↑ Transactions</div>
+      <button class="btn-view-stat" onclick="showStatDetail('Today Sales', '${d.total_sales_today || 0}')">View</button>
     </div>
     <div class="stat-card" style="--card-color:var(--warning)">
-      <div class="stat-value" title="${d.low_stock || 0}">${d.low_stock || 0}</div>
+      <div class="stat-value">${d.low_stock || 0}</div>
       <div class="stat-label">Low Stock Items</div>
       <div class="stat-change ${(d.low_stock || 0) > 0 ? 'down' : 'up'}">${(d.low_stock || 0) > 0 ? '↓ Needs attention' : '✓ OK'}</div>
+      <button class="btn-view-stat" onclick="showStatDetail('Low Stock', '${d.low_stock || 0}')">View</button>
     </div>
   `;
 
