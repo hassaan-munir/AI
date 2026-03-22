@@ -2223,22 +2223,7 @@
             <div class="page-title">Sales History</div>
             <div class="page-subtitle">All transactions & revenue</div>
           </div>
-          <div class="header-actions">
-            <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-end; width:100%">
-              <div style="display:flex; align-items:center; gap:8px">
-                <span style="color:var(--text3); font-size:12px">From:</span>
-                <input type="date" id="sales-start-date" class="date-input"
-                  style="padding:6px; border-radius:6px; border:1px solid var(--border); background:var(--surface2); color:var(--text); font-size:12px; width:130px">
-              </div>
-              <div style="display:flex; align-items:center; gap:8px">
-                <span style="color:var(--text3); font-size:12px">To:</span>
-                <input type="date" id="sales-end-date" class="date-input"
-                  style="padding:6px; border-radius:6px; border:1px solid var(--border); background:var(--surface2); color:var(--text); font-size:12px; width:130px">
-              </div>
-              <button class="btn btn-primary" onclick="loadSalesHistory()"
-                style="padding:6px 12px; font-size:12px; align-self:flex-end">Filter</button>
-            </div>
-          </div>
+          <div class="header-actions"></div>
         </div>
         <div class="page-body">
           <div class="stat-grid" id="sales-stats" style="grid-template-columns:repeat(3,1fr)"></div>
@@ -3770,13 +3755,7 @@
     // SALES HISTORY
     // ==========================================
     async function loadSalesHistory() {
-      const startDate = document.getElementById('sales-start-date')?.value;
-      const endDate = document.getElementById('sales-end-date')?.value;
-
-      const res = await apiCall(WEBHOOKS.GET_SALES, {
-        start_date: startDate ? startDate + ' 00:00:00' : null,
-        end_date: endDate ? endDate + ' 23:59:59' : null
-      });
+      const res = await apiCall(WEBHOOKS.GET_SALES, {});
       salesData = res.data || [];
       const tbody = document.getElementById('sales-tbody');
       const total = salesData.reduce((a, s) => a + parseFloat(s.total_amount), 0);
