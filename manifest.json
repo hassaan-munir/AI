@@ -1,6 +1,6 @@
 {
-  "name": "Meri App",
-  "short_name": "App",
+  "name": "Stock Sense",
+  "short_name": "Stock Sense",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
