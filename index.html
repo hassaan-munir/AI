@@ -2847,6 +2847,14 @@
       const res = Array.isArray(rawRes) ? rawRes[0] : rawRes;
       if (res.success || res.message === 'Workflow was started') {
         toast('Registration Successful', 'success');
+        
+        // Clear registration fields
+        document.getElementById('reg-store-name').value = '';
+        document.getElementById('reg-owner-name').value = '';
+        document.getElementById('reg-email').value = '';
+        document.getElementById('reg-phone').value = '';
+        document.getElementById('reg-password').value = '';
+
         switchAuthTab('login');
         document.getElementById('login-email').value = email;
       } else {
@@ -2855,6 +2863,16 @@
     }
 
     function doLogout() {
+      history.replaceState(null, '', window.location.pathname);
+      // Clear auth fields
+      document.getElementById('login-email').value = '';
+      document.getElementById('login-password').value = '';
+      document.getElementById('reg-store-name').value = '';
+      document.getElementById('reg-owner-name').value = '';
+      document.getElementById('reg-email').value = '';
+      document.getElementById('reg-phone').value = '';
+      document.getElementById('reg-password').value = '';
+
       // Clear JWT token and all session data
       authToken = null;
       currentUser = null; currentStore = null;
@@ -2925,7 +2943,10 @@
       return `<button class="nav-item" data-panel="${dataPanel}" onclick="navigateTo('${panel}')">${icon} <span>${label}</span></button>`;
     }
 
-    function navigateTo(panel) {
+    function navigateTo(panel, isHistoryNav = false) {
+      if (!isHistoryNav) {
+        history.pushState({ panel: panel }, '', '#' + panel);
+      }
       document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
       document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
       const el = document.getElementById('panel-' + panel);
@@ -3753,6 +3774,16 @@
       }
     }
 
+    window.addEventListener('popstate', (event) => {
+      if (event.state && event.state.panel) {
+        navigateTo(event.state.panel, true);
+      } else if (window.location.hash) {
+        navigateTo(window.location.hash.replace('#', ''), true);
+      } else {
+        doLogout();
+      }
+    });
+
     document.addEventListener('DOMContentLoaded', () => {
       // Restore saved theme
       if (localStorage.getItem('retailai-theme') === 'light') {
@@ -3777,6 +3808,12 @@
           console.log('   Store:', localStorage.getItem('store_name'));
           initApp();
           toast(`Welcome back, ${currentUser.full_name}! 👋`, 'success');
+
+          const urlHash = window.location.hash.replace('#', '');
+          if (urlHash && currentUser) {
+            navigateTo(urlHash, true);
+          }
+
           return; // Skip showing auth screen
         } catch (e) {
           console.warn('Failed to restore session, clearing saved data');
