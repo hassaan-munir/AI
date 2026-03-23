@@ -2769,6 +2769,7 @@
     let cart = [];
     let selectedPayment = 'cash';
     let selectedRole = 'staff';
+    let allUsers = [];
     let salesData = [];
     let refundSaleItems = [];
 
@@ -2833,8 +2834,11 @@
         console.log('✅ Webhook response from', url, jsonData);
         return jsonData;
       } catch (e) {
-        // For demo/development, return mock data
         console.error('❌ Webhook FAILED for', url, '| Error:', e.message);
+        // Authentication MUST be verified by a real backend. NEVER fall back to mock success for login/register.
+        if (url.includes('login') || url.includes('register')) {
+          return { success: false, message: 'Connection Error: Could not reach server. Please check your network/webhooks.' };
+        }
         console.warn('Falling back to mock/demo data.');
         return getMockData(url, data);
       }
@@ -2845,24 +2849,10 @@
     // ==========================================
     function getMockData(url, data) {
       if (url.includes('login')) {
-        if (data.email && data.password) {
-          return {
-            success: true,
-            token: 'demo_jwt_token_' + Date.now(),
-            role: data.role || 'staff',
-            store_id: 1,
-            store_name: 'My Retail Store',
-            user_id: 1,
-            full_name: data.role === 'admin' ? 'Store Owner' : 'Staff Member',
-            email: data.email,
-            user: { user_id: 1, full_name: data.role === 'admin' ? 'Store Owner' : 'Staff Member', email: data.email, role: data.role || 'staff', store_id: 1, is_active: 1 },
-            store: { store_id: 1, store_name: 'My Retail Store', owner_name: 'Store Owner', plan_type: 'premium', is_active: 1 }
-          };
-        }
-        return { success: false, message: 'Invalid credentials' };
+        return { success: false, message: 'Authentication required. Webhooks must be connected.' };
       }
       if (url.includes('register')) {
-        return { success: true, message: 'Store registered successfully! Please login.', store_id: 1 };
+        return { success: false, message: 'Registration required. Webhooks must be connected.' };
       }
       if (url.includes('products/get')) {
         return {
@@ -3851,9 +3841,9 @@
     // ==========================================
     async function loadUsers() {
       const res = await apiCall(WEBHOOKS.GET_USERS, {});
-      const data = res.data || [];
+      allUsers = res.data || [];
       const tbody = document.getElementById('users-tbody');
-      tbody.innerHTML = data.map(u => `<tr>
+      tbody.innerHTML = allUsers.map(u => `<tr>
     <td class="td-primary">${u.full_name}</td>
     <td>${u.email}</td>
     <td><span class="badge ${u.role === 'owner' ? 'badge-blue' : u.role === 'admin' ? 'badge-yellow' : 'badge-gray'}">${u.role}</span></td>
@@ -3871,6 +3861,20 @@
       const password_hash = document.getElementById('u-pass').value;
       const role = document.getElementById('u-role').value;
       if (!full_name || !email || !password_hash) { toast('Fill all fields', 'error'); return; }
+
+      // Duplicate check
+      if (allUsers.some(u => u.email.toLowerCase() === email.toLowerCase())) {
+        toast('Staff with this email already exists!', 'error');
+        return;
+      }
+
+      // Password Complexity (8+ chars, upper, lower, number)
+      const passRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+      if (!passRegex.test(password_hash)) {
+        toast('Password must be 8+ chars, include upper/lower case & a number', 'error');
+        return;
+      }
+
       const res = await apiCall(WEBHOOKS.ADD_USER, { full_name, email, password_hash, role, is_active: 1 });
       if (res.success) {
         toast('Staff added!', 'success');
@@ -3880,6 +3884,21 @@
     }
 
     async function toggleUser(userId, isActive) {
+      if (isActive) { // Attempting to deactivate
+        if (userId == currentUser?.user_id) {
+          toast('You cannot deactivate yourself!', 'error');
+          return;
+        }
+        const user = allUsers.find(u => u.user_id == userId);
+        if (user && (user.role === 'owner' || user.role === 'admin')) {
+          const otherAdmins = allUsers.filter(u => (u.role === 'owner' || u.role === 'admin') && u.is_active && u.user_id != userId);
+          if (otherAdmins.length === 0) {
+            toast('Cannot deactivate the only active owner/admin!', 'error');
+            return;
+          }
+        }
+      }
+
       const res = await apiCall(WEBHOOKS.TOGGLE_USER, { target_user_id: userId, is_active: isActive ? 0 : 1 });
       if (res.success) { toast('User status updated', 'success'); loadUsers(); }
     }
