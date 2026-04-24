@@ -1,4 +1,4 @@
-# 🚀 StockSense – AI Powered Inventory Management System
+# StockSense – AI Powered Inventory Management System
 
 StockSense is a production-oriented Inventory Management System built using a hybrid low-code and no-code architecture. The system integrates workflow automation, a relational database, and an AI-powered chatbot to create a smart, scalable, and real-world business solution.
 
@@ -91,7 +91,7 @@ The backend server is hosted locally and may not always be active.
 
 ---
 
-## 📦 Features
+## Features
 
 * Full Inventory Management System
 * Sales and Refund Handling
@@ -118,7 +118,7 @@ The backend server is hosted locally and may not always be active.
 
 ---
 
-## 🔮 Future Improvements
+##  Future Improvements
 
 * Cloud-based deployment
 * Queue system for LLM requests
@@ -127,7 +127,7 @@ The backend server is hosted locally and may not always be active.
 
 ---
 
-## 📬 Contact
+##  Contact
 
 If you want a live walkthrough, demo, or explanation of the system:
 
@@ -135,6 +135,6 @@ If you want a live walkthrough, demo, or explanation of the system:
 
 ---
 
-## ⭐ Final Note
+##  Final Note
 
 This project demonstrates how a production-grade system can be built using low-code tools combined with AI. It reflects real-world challenges, engineering decisions, and system design thinking.
