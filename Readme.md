@@ -82,7 +82,7 @@ Due to LLM limitations:
 
 ## 🌐 Live Demo
 
-👉 **Live Demo Link:** *[Click Here](stock-sence.vercel.app)*
+👉 **Live Demo Link:** *[Click Here](www.stock-sence.vercel.app)*
 
 ⚠️ Note:
 The backend server is hosted locally and may not always be active.
