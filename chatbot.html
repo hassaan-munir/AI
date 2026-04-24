@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StockSense AI</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #09090b;
+      --surface: #121216;
+      --surface2: #1c1c21;
+      --surface3: #27272e;
+      --border: #2a2a35;
+      --accent: #6366f1;
+      --accent-hover: #818cf8;
+      --accent2: #ec4899;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #fbbf24;
+      --text: #f8fafc;
+      --text2: #94a3b8;
+      --text3: #64748b;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--surface3);
+      border-radius: 10px;
+    }
+
+    html,
+    body {
+      height: 100%;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ---- HEADER ---- */
+    .chat-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 64px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 14px;
+      z-index: 100;
+    }
+
+    .back-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text2);
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all .2s;
+      white-space: nowrap;
+    }
+
+    .back-btn:hover {
+      background: var(--surface3);
+      color: var(--text);
+    }
+
+    .header-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+    }
+
+    .ai-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .header-info h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .header-info h2 span {
+      color: var(--accent);
+    }
+
+    .header-info p {
+      font-size: 11px;
+      color: var(--text3);
+      margin-top: 1px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 6px var(--success);
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+
+    .clear-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text3);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      cursor: pointer;
+      transition: all .2s;
+      white-space: nowrap;
+    }
+
+    .clear-btn:hover {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    /* ---- MESSAGES AREA ---- */
+    #messages {
+      position: fixed;
+      top: 64px;
+      bottom: 80px;
+      left: 0;
+      right: 0;
+      overflow-y: auto;
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    @media (min-width: 700px) {
+      #messages {
+        padding: 24px calc(50% - 340px);
+      }
+
+      .input-bar {
+        padding: 12px calc(50% - 340px);
+      }
+    }
+
+    .msg-row {
+      display: flex;
+      gap: 10px;
+      animation: fadeUp .3s ease forwards;
+      opacity: 0;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .msg-row.user {
+      flex-direction: row-reverse;
+    }
+
+    .msg-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .msg-avatar.ai {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+    }
+
+    .msg-avatar.user-av {
+      background: var(--surface3);
+    }
+
+    .msg-bubble {
+      max-width: 80%;
+      padding: 12px 16px;
+      border-radius: 14px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .msg-row.ai .msg-bubble {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-top-left-radius: 4px;
+      color: var(--text);
+    }
+
+    .msg-row.user .msg-bubble {
+      background: var(--accent);
+      color: #fff;
+      border-top-right-radius: 4px;
+    }
+
+    .msg-time {
+      font-size: 10px;
+      color: var(--text3);
+      margin-top: 4px;
+      padding: 0 4px;
+    }
+
+    .msg-row.user .msg-time {
+      text-align: right;
+    }
+
+    /* Tables inside AI bubble */
+    .msg-bubble table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 12px;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .msg-bubble table thead tr {
+      background: var(--surface2);
+      color: var(--text2);
+    }
+
+    .msg-bubble table th {
+      padding: 8px 10px;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .msg-bubble table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .msg-bubble table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .msg-bubble table tr:hover td {
+      background: var(--surface2);
+    }
+
+    /* Lists inside AI bubble */
+    .msg-bubble ul {
+      padding-left: 18px;
+      margin-top: 8px;
+    }
+
+    .msg-bubble ul li {
+      margin-bottom: 5px;
+      color: var(--text);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .badge-green {
+      background: rgba(16, 185, 129, .15);
+      color: var(--success);
+    }
+
+    .badge-red {
+      background: rgba(239, 68, 68, .15);
+      color: var(--danger);
+    }
+
+    .badge-yellow {
+      background: rgba(251, 191, 36, .15);
+      color: var(--warning);
+    }
+
+    .badge-indigo {
+      background: rgba(99, 102, 241, .15);
+      color: var(--accent);
+    }
+
+    /* Typing indicator */
+    .typing-indicator {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 14px 16px;
+    }
+
+    .typing-indicator span {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--text3);
+      animation: bounce .9s infinite;
+    }
+
+    .typing-indicator span:nth-child(2) {
+      animation-delay: .15s;
+    }
+
+    .typing-indicator span:nth-child(3) {
+      animation-delay: .3s;
+    }
+
+    @keyframes bounce {
+
+      0%,
+      60%,
+      100% {
+        transform: translateY(0);
+      }
+
+      30% {
+        transform: translateY(-6px);
+      }
+    }
+
+    /* ---- INPUT BAR ---- */
+    .input-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 80px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+    }
+
+    #chat-input {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 16px;
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 14px;
+      outline: none;
+      transition: border-color .2s;
+      resize: none;
+      height: 48px;
+      line-height: 1.5;
+    }
+
+    #chat-input:focus {
+      border-color: var(--accent);
+    }
+
+    #chat-input::placeholder {
+      color: var(--text3);
+    }
+
+    #send-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      border: none;
+      color: #fff;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .2s;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, .3);
+    }
+
+    #send-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 16px rgba(99, 102, 241, .4);
+    }
+
+    #send-btn:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255, 255, 255, .3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Welcome screen */
+    .welcome-msg {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text2);
+    }
+
+    .welcome-msg .big-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    .welcome-msg h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 20px;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .welcome-msg p {
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .suggestions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 16px;
+    }
+
+    .suggestion-chip {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text2);
+      padding: 7px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all .2s;
+    }
+
+    .suggestion-chip:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(99, 102, 241, .08);
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- HEADER -->
+  <div class="chat-header">
+    <a class="back-btn" id="back-link" href="index.html">
+      ← Back to Dashboard
+    </a>
+    <div class="header-title">
+      <div class="ai-avatar">🤖</div>
+      <div class="header-info">
+        <h2>Stock<span>Sense</span> AI</h2>
+        <p>Your store assistant</p>
+      </div>
+    </div>
+    <div class="status-dot"></div>
+    <button class="clear-btn" onclick="clearChat()">Clear Chat</button>
+  </div>
+
+  <!-- MESSAGES -->
+  <div id="messages">
+    <div class="welcome-msg" id="welcome-screen">
+      <div class="big-icon">🤖</div>
+      <h3>StockSense AI</h3>
+      <p>Ask me anything about your store. I can show products, sales, refunds, stock info, staff, and more.</p>
+      <div class="suggestions">
+        <div class="suggestion-chip" onclick="quickSend('Show all products')">📦 Show all products</div>
+        <div class="suggestion-chip" onclick="quickSend('Show dashboard stats')">📊 Dashboard stats</div>
+        <div class="suggestion-chip" onclick="quickSend('Show low stock items')">⚠️ Low stock items</div>
+        <div class="suggestion-chip" onclick="quickSend('Show recent sales')">💰 Recent sales</div>
+        <div class="suggestion-chip" onclick="quickSend('Show all staff')">👥 Staff list</div>
+        <div class="suggestion-chip" onclick="quickSend('Show attendance today')">🕐 Attendance</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INPUT -->
+  <div class="input-bar">
+    <input type="text" id="chat-input" placeholder="Ask me anything about your store..." autocomplete="off">
+    <button id="send-btn" onclick="sendMessage()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="22" y1="2" x2="11" y2="13" />
+        <polygon points="22 2 15 22 11 13 2 9 22 2" />
+      </svg>
+    </button>
+  </div>
+
+  <script>
+    // ---- SESSION ----
+    const params = new URLSearchParams(window.location.search);
+    let authToken = params.get('token') || localStorage.getItem('retailai-token') || '';
+    let store_id = params.get('store_id') || localStorage.getItem('store_id') || '';
+    let user_id = params.get('user_id') || localStorage.getItem('user_id') || '';
+
+    const isEmbedded = params.get('embedded') === 'true';
+
+    const AI_WEBHOOK = 'https://unretentive-rodney-unleaved.ngrok-free.dev/webhook/85e0be1b-57d7-4fcc-a88c-164f017a0792';
+    const HISTORY_KEY = 'stocksense_chat_history';
+
+    // ---- RESTORE HISTORY ----
+    window.addEventListener('DOMContentLoaded', () => {
+      // Set back link
+      const backLink = document.getElementById('back-link');
+      if (backLink) backLink.href = 'index.html';
+
+      if (isEmbedded) {
+        const backLink = document.getElementById('back-link');
+        if (backLink) backLink.style.display = 'none';
+
+        // Remove left padding from header since back button is gone
+        const header = document.querySelector('.chat-header');
+        if (header) header.style.paddingLeft = '16px';
+      }
+
+      const history = getSavedHistory();
+      if (history.length > 0) {
+        document.getElementById('welcome-screen').style.display = 'none';
+        history.forEach(m => renderMessage(m.role, m.content, m.time, false));
+      }
+
+      // Enter key
+      document.getElementById('chat-input').addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+      });
+    });
+
+    // ---- HISTORY HELPERS ----
+    function getSavedHistory() {
+      try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; } catch { return []; }
+    }
+    function saveToHistory(role, content, time) {
+      const h = getSavedHistory();
+      h.push({ role, content, time });
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(h));
+    }
+    function clearChat() {
+      if (!confirm('Clear chat history?')) return;
+      localStorage.removeItem(HISTORY_KEY);
+      const msgs = document.getElementById('messages');
+      msgs.innerHTML = '';
+      // Restore welcome
+      msgs.innerHTML = `<div class="welcome-msg" id="welcome-screen">
+      <div class="big-icon">🤖</div>
+      <h3>StockSense AI</h3>
+      <p>Ask me anything about your store.</p>
+      <div class="suggestions">
+        <div class="suggestion-chip" onclick="quickSend('Show all products')">📦 Show all products</div>
+        <div class="suggestion-chip" onclick="quickSend('Show dashboard stats')">📊 Dashboard stats</div>
+        <div class="suggestion-chip" onclick="quickSend('Show low stock items')">⚠️ Low stock items</div>
+        <div class="suggestion-chip" onclick="quickSend('Show recent sales')">💰 Recent sales</div>
+        <div class="suggestion-chip" onclick="quickSend('Show all staff')">👥 Staff list</div>
+        <div class="suggestion-chip" onclick="quickSend('Show attendance today')">🕐 Attendance</div>
+      </div>
+    </div>`;
+    }
+
+    // ---- QUICK SEND ----
+    function quickSend(text) {
+      document.getElementById('chat-input').value = text;
+      sendMessage();
+    }
+
+    // ---- SEND MESSAGE ----
+    async function sendMessage() {
+      const input = document.getElementById('chat-input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      // Hide welcome
+      const welcome = document.getElementById('welcome-screen');
+      if (welcome) welcome.style.display = 'none';
+
+      input.value = '';
+      const time = getTime();
+
+      // Show user message
+      renderMessage('user', text, time, true);
+      saveToHistory('user', text, time);
+
+      // Show typing
+      const typingId = showTyping();
+
+      // Disable send
+      const btn = document.getElementById('send-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<div class="spinner"></div>';
+
+      try {
+        const res = await fetch(AI_WEBHOOK, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + authToken
+          },
+          body: JSON.stringify({ text, store_id, user_id })
+        });
+
+        removeTyping(typingId);
+
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+
+        let raw = await res.text();
+        const aiTime = getTime();
+
+        // I clean the raw response — remove leading = sign if present
+        raw = raw.trim();
+        if (raw.startsWith('=')) raw = raw.slice(1).trim();
+
+        const formatted = formatResponse(raw);
+        renderAIMessage(formatted, aiTime, true);
+        saveToHistory('ai', raw, aiTime);
+
+      } catch (e) {
+        removeTyping(typingId);
+        const errTime = getTime();
+        renderMessage('ai', 'Sorry, could not reach the AI. Please check your connection or try again.', errTime, true);
+      }
+
+      btn.disabled = false;
+      btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>`;
+      input.focus();
+    }
+
+    // ---- FORMAT RESPONSE ----
+    function formatResponse(raw) {
+      let cleaned = (raw || '').trim();
+      if (cleaned.startsWith('=')) cleaned = cleaned.slice(1).trim();
+
+      let parsed;
+      try {
+        parsed = JSON.parse(cleaned);
+      } catch {
+        const match = cleaned.match(/\{[\s\S]*\}/) || cleaned.match(/\[[\s\S]*\]/);
+        if (match) {
+          try { parsed = JSON.parse(match[0]); }
+          catch { return { type: 'chat', message: cleaned }; }
+        } else {
+          return { type: 'chat', message: cleaned };
+        }
+      }
+
+      if (!parsed) return { type: 'chat', message: cleaned };
+
+      // Use response[0] as required
+      const response = Array.isArray(parsed) ? parsed[0] : parsed;
+      if (!response) return { type: 'chat', message: cleaned };
+
+      const status = response.status || 'chat';
+      const message = response.message || '';
+      const data = response.data || null;
+      const missing_fields = response.missing_fields || [];
+
+      if (status === 'incomplete') {
+        return { type: 'incomplete', message, fields: missing_fields };
+      }
+
+      if (status === 'complete' || status === 'success') {
+        const detected = detectDataType(data || response);
+        return {
+          type: detected.type === 'text' ? 'text' : detected.type,
+          message: message,
+          items: detected.items,
+          stats: detected.stats,
+          content: message
+        };
+      }
+
+      return { type: 'chat', message: message || cleaned };
+    }
+
+    // Helper to detect data type for special rendering
+    function detectDataType(data) {
+      if (!data) return { type: 'text' };
+
+      let items = null;
+      if (Array.isArray(data)) items = data;
+      else if (data.products) items = data.products;
+      else if (data.sales) items = data.sales;
+      else if (data.users) items = data.users;
+      else if (data.attendance) items = data.attendance;
+      else if (data.movements) items = data.movements;
+
+      if (Array.isArray(items) && items.length > 0) {
+        const first = items[0];
+        if (first.refund_id !== undefined) return { type: 'refunds', items };
+        if (first.move_id !== undefined) return { type: 'movements', items };
+        if (first.att_id !== undefined) return { type: 'attendance', items };
+        if (first.full_name !== undefined && first.role !== undefined) return { type: 'users', items };
+        if (first.sale_id !== undefined && first.total_amount !== undefined) return { type: 'sales', items };
+        if (first.product_id !== undefined && first.unit_price !== undefined) return { type: 'sale_items', items };
+        if (first.product_id !== undefined) return { type: 'products', items };
+      }
+
+      if (data.total_revenue_today !== undefined || data.stats) {
+        return { type: 'dashboard', stats: data.stats || data };
+      }
+
+      return { type: 'text' };
+    }
+
+    // ---- RENDER AI MESSAGE (formatted) ----
+    function renderAIMessage(formatted, time, animate) {
+      const msgs = document.getElementById('messages');
+
+      const row = document.createElement('div');
+      row.className = 'msg-row ai';
+      if (!animate) row.style.animation = 'none';
+
+      let html = '';
+
+      if (formatted.type === 'text' || formatted.type === 'chat') {
+        html = `<p>${formatted.message || formatted.content}</p>`;
+      }
+
+      else if (formatted.type === 'incomplete') {
+        html = `
+        <div style="display:flex; gap:12px; align-items:flex-start;">
+          <div style="background:rgba(251,191,36,0.1); padding:8px; border-radius:8px; color:var(--warning); font-size:20px;">⚠️</div>
+          <div>
+            <p style="font-weight:600; color:var(--text); margin-bottom:4px;">${formatted.message}</p>
+            <p style="font-size:12px; color:var(--text2); margin-bottom:8px;">Required information is missing:</p>
+            <ul style="margin-left:4px;">`;
+        formatted.fields.forEach(f => {
+          const label = f.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+          html += `<li style="font-size:13px; margin-bottom:4px; color:var(--text2); list-style-type: '• '; list-style-position: inside;">${label}</li>`;
+        });
+        html += `</ul>
+          </div>
+        </div>`;
+      }
+
+      else if (formatted.type === 'products') {
+        html = `<p style="margin-bottom:8px;">${formatted.message}</p>
+      <div style="overflow-x:auto;">
+      <table>
+        <thead><tr>
+          <th>#</th><th>Name</th><th>Category</th>
+          <th>Stock</th><th>Cost</th><th>Sale Price</th>
+        </tr></thead>
+        <tbody>`;
+        formatted.items.forEach((p, i) => {
+          const stockBadge = p.current_stock <= p.min_stock_level
+            ? `<span class="badge badge-red">${p.current_stock}</span>`
+            : `<span class="badge badge-green">${p.current_stock}</span>`;
+          html += `<tr>
+          <td style="color:var(--text3)">${i + 1}</td>
+          <td><strong>${p.name}</strong><br><small style="color:var(--text3)">${p.sku || ''}</small></td>
+          <td><span class="badge badge-indigo">${p.category || '-'}</span></td>
+          <td>${stockBadge}</td>
+          <td style="color:var(--text2)">Rs ${parseFloat(String(p.cost_price || 0).replace(/[^0-9.]/g, '') || 0).toFixed(2)}</td>
+          <td style="color:var(--accent);font-weight:600">Rs ${parseFloat(String(p.sale_price || 0).replace(/[^0-9.]/g, '') || 0).toFixed(2)}</td>
+        </tr>`;
+        });
+        html += `</tbody></table></div>`;
+      }
+
+      else if (formatted.type === 'sales') {
+        html = `<p style="margin-bottom:8px;">${formatted.message}</p>
+      <div style="overflow-x:auto;">
+      <table>
+        <thead><tr><th>Sale ID</th><th>Amount</th><th>Payment</th><th>Date</th></tr></thead>
+        <tbody>`;
+        formatted.items.forEach(s => {
+          html += `<tr>
+          <td style="color:var(--text3)">#${s.sale_id}</td>
+          <td style="color:var(--success);font-weight:600">Rs ${parseFloat(String(s.total_amount || 0).replace(/[^0-9.]/g, '') || 0).toFixed(2)}</td>
+          <td><span class="badge badge-indigo">${s.payment_method}</span></td>
+          <td style="color:var(--text2)">${new Date(s.sale_datetime).toLocaleString()}</td>
+        </tr>`;
+        });
+        html += `</tbody></table></div>`;
+      }
+
+      else if (formatted.type === 'users') {
+        html = `<p style="margin-bottom:8px;">${formatted.message}</p>
+      <table>
+        <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th></tr></thead>
+        <tbody>`;
+        formatted.items.forEach(u => {
+          html += `<tr>
+          <td><strong>${u.full_name}</strong></td>
+          <td style="color:var(--text2);font-size:11px">${u.email}</td>
+          <td><span class="badge badge-indigo">${u.role}</span></td>
+          <td><span class="badge ${u.is_active ? 'badge-green' : 'badge-red'}">${u.is_active ? 'Active' : 'Inactive'}</span></td>
+        </tr>`;
+        });
+        html += `</tbody></table>`;
+      }
+
+      else if (formatted.type === 'attendance') {
+        html = `<p style="margin-bottom:8px;">${formatted.message}</p>
+      <table>
+        <thead><tr><th>Staff</th><th>Date</th><th>Check In</th><th>Check Out</th></tr></thead>
+        <tbody>`;
+        formatted.items.forEach(a => {
+          html += `<tr>
+          <td><strong>${a.full_name || a.user_id}</strong></td>
+          <td style="color:var(--text2)">${a.date}</td>
+          <td style="color:var(--success)">${a.checkin_time ? new Date(a.checkin_time).toLocaleTimeString() : '-'}</td>
+          <td style="color:var(--warning)">${a.checkout_time ? new Date(a.checkout_time).toLocaleTimeString() : '-'}</td>
+        </tr>`;
+        });
+        html += `</tbody></table>`;
+      }
+
+      else if (formatted.type === 'sale_items') {
+        html = `<p style="margin-bottom:8px;">${formatted.message}</p>
+      <div style="overflow-x:auto;">
+      <table>
+        <thead><tr><th>Product</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr></thead>
+        <tbody>`;
+        formatted.items.forEach(i => {
+          html += `<tr>
+          <td style="color:var(--text)">${i.name || i.product_name || '-'}</td>
+          <td style="color:var(--text);font-weight:600">${i.qty}</td>
+          <td style="color:var(--text2)">Rs ${parseFloat(i.unit_price || 0).toFixed(2)}</td>
+          <td style="color:var(--accent);font-weight:600">Rs ${parseFloat(i.line_total || 0).toFixed(2)}</td>
+        </tr>`;
+        });
+        html += `</tbody></table></div>`;
+      }
+
+      else if (formatted.type === 'refunds') {
+        html = `<p style="margin-bottom:8px;">${formatted.message}</p>
+      <div style="overflow-x:auto;">
+      <table>
+        <thead><tr><th>Refund ID</th><th>Product</th><th>Qty</th><th>Amount</th><th>Reason</th><th>Staff</th><th>Date</th></tr></thead>
+        <tbody>`;
+        formatted.items.forEach(r => {
+          html += `<tr>
+          <td style="color:var(--text3)">#${r.refund_id}</td>
+          <td style="color:var(--text)">${r.product_name || '-'}</td>
+          <td style="color:var(--text);font-weight:600">${r.qty}</td>
+          <td style="color:var(--danger);font-weight:600">Rs ${parseFloat(String(r.amount || 0).replace(/[^0-9.]/g, '') || 0).toFixed(2)}</td>
+          <td style="color:var(--text3);font-size:11px">${r.reason || '-'}</td>
+          <td style="color:var(--text2)">${r.staff_name || '-'}</td>
+          <td style="color:var(--text2);font-size:11px">${new Date(r.refund_datetime).toLocaleString()}</td>
+        </tr>`;
+        });
+        html += `</tbody></table></div>`;
+      }
+
+      else if (formatted.type === 'movements') {
+        html = `<p style="margin-bottom:8px;">${formatted.message}</p>
+      <div style="overflow-x:auto;">
+      <table>
+        <thead><tr><th>Type</th><th>Product</th><th>Qty</th><th>Staff</th><th>Note</th><th>Date</th></tr></thead>
+        <tbody>`;
+        formatted.items.forEach(m => {
+          const typeBadge = m.type === 'restock'
+            ? `<span class="badge badge-green">${m.type}</span>`
+            : m.type === 'damage'
+              ? `<span class="badge badge-red">${m.type}</span>`
+              : `<span class="badge badge-yellow">${m.type}</span>`;
+          html += `<tr>
+          <td>${typeBadge}</td>
+          <td style="color:var(--text)">${m.product_name || '-'}</td>
+          <td style="color:var(--text);font-weight:600">${m.qty}</td>
+          <td style="color:var(--text2)">${m.staff_name || '-'}</td>
+          <td style="color:var(--text3);font-size:11px">${m.note || '-'}</td>
+          <td style="color:var(--text2);font-size:11px">${new Date(m.move_datetime).toLocaleString()}</td>
+        </tr>`;
+        });
+        html += `</tbody></table></div>`;
+      }
+
+      else if (formatted.type === 'dashboard') {
+        const s = formatted.stats;
+        html = `<p style="margin-bottom:10px;">${formatted.message}</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
+        <div style="background:var(--surface2);padding:12px;border-radius:10px;border:1px solid var(--border);">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Today Revenue</div>
+          <div style="font-size:18px;font-weight:700;color:var(--success)">Rs ${parseFloat(s.total_revenue_today || 0).toLocaleString()}</div>
+        </div>
+        <div style="background:var(--surface2);padding:12px;border-radius:10px;border:1px solid var(--border);">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Monthly Revenue</div>
+          <div style="font-size:18px;font-weight:700;color:var(--accent)">Rs ${parseFloat(s.total_revenue_month || 0).toLocaleString()}</div>
+        </div>
+        <div style="background:var(--surface2);padding:12px;border-radius:10px;border:1px solid var(--border);">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Sales Today</div>
+          <div style="font-size:18px;font-weight:700;color:var(--text)">${s.total_sales_today || 0}</div>
+        </div>
+        <div style="background:var(--surface2);padding:12px;border-radius:10px;border:1px solid var(--border);">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Low Stock Items</div>
+          <div style="font-size:18px;font-weight:700;color:var(--warning)">${s.low_stock || 0}</div>
+        </div>
+      </div>`;
+      }
+
+      row.innerHTML = `
+      <div class="msg-avatar ai">🤖</div>
+      <div>
+        <div class="msg-bubble">${html}</div>
+        <div class="msg-time">${time}</div>
+      </div>`;
+
+      msgs.appendChild(row);
+      scrollToBottom();
+    }
+
+    // ---- RENDER PLAIN MESSAGE ----
+    function renderMessage(role, content, time, animate) {
+      if (role === 'ai') {
+        // I try to format saved AI messages from history
+        const formatted = formatResponse(content);
+        renderAIMessage(formatted, time, animate);
+        return;
+      }
+
+      const msgs = document.getElementById('messages');
+      const row = document.createElement('div');
+      row.className = `msg-row ${role}`;
+      if (!animate) row.style.animation = 'none';
+
+      row.innerHTML = `
+      <div class="msg-avatar user-av">👤</div>
+      <div>
+        <div class="msg-bubble">${escapeHtml(content)}</div>
+        <div class="msg-time">${time}</div>
+      </div>`;
+
+      msgs.appendChild(row);
+      scrollToBottom();
+    }
+
+    // ---- TYPING INDICATOR ----
+    function showTyping() {
+      const msgs = document.getElementById('messages');
+      const id = 'typing-' + Date.now();
+      const row = document.createElement('div');
+      row.className = 'msg-row ai';
+      row.id = id;
+      row.innerHTML = `
+      <div class="msg-avatar ai">🤖</div>
+      <div class="msg-bubble" style="padding:10px 14px;">
+        <div class="typing-indicator">
+          <span></span><span></span><span></span>
+        </div>
+      </div>`;
+      msgs.appendChild(row);
+      scrollToBottom();
+      return id;
+    }
+
+    function removeTyping(id) {
+      const el = document.getElementById(id);
+      if (el) el.remove();
+    }
+
+    // ---- HELPERS ----
+    function getTime() {
+      return new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    }
+    function scrollToBottom() {
+      const msgs = document.getElementById('messages');
+      setTimeout(() => msgs.scrollTop = msgs.scrollHeight, 50);
+    }
+    function escapeHtml(text) {
+      return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+  </script>
+</body>
+
+</html>
